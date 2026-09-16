@@ -5,6 +5,7 @@ import {
 import {
     mostrarEstatica,
     ocultarEstatica,
+    mostrarApagada,
     cambiarVideo,
     obtenerVideo
 } from './tvMedia.js';
@@ -17,57 +18,37 @@ import {
     detenerAudioEstatica
 } from './tvAudio.js';
 
+import {
+    encenderLuzTV,
+    apagarLuzTV
+} from './tvLights.js';
 
-// ======================================================
-// DEPENDENCIAS
-// ======================================================
-
-const video =
-    obtenerVideo();
-
-
-// ======================================================
-// ESTADO
-// ======================================================
+const video = obtenerVideo();
 
 let canalActual = 0;
-
 let reproduciendo = false;
-
-
-// Identificador para evitar que una carga antigua
-// interfiera con un cambio de canal posterior.
+let encendida = true;
 
 let cambioCanalID = 0;
 
-
-// ======================================================
-// REPRODUCIR
-// ======================================================
-
 async function reproducir() {
+    if (!encendida) {
+        return false;
+    }
 
-    // Quitar estática
     ocultarEstatica();
 
     detenerAudioEstatica();
 
-
-    // El canal siempre comienza desde cero
     video.currentTime = 0;
 
     try {
-
         await video.play();
-
         reproduciendo = true;
 
-
-        // Reproducir audio del canal
         reproducirAudio(canalActual);
 
         return true;
-
     } catch (error) {
 
         console.error(
@@ -76,235 +57,161 @@ async function reproducir() {
         );
 
         reproduciendo = false;
+        mostrarEstatica();
+        reproducirAudioEstatica();
+        return false;
+    }
+}
+
+function pausar() {
+    video.pause();
+
+    video.currentTime = 0;
+
+    detenerAudio();
+
+    reproduciendo = false;
+
+    mostrarEstatica();
+
+    reproducirAudioEstatica();
+}
+
+async function toggleReproduccion() {
+    if (!encendida) {
+        return;
+    }
+
+    if (reproduciendo) {
+        pausar();
+    } else {
+        await reproducir();
+    }
+}
+
+function alternarEncendido() {
+
+    encendida = !encendida;
+
+    if (encendida) {
+
+        encenderLuzTV();
 
         mostrarEstatica();
 
         reproducirAudioEstatica();
 
-        return false;
+        reproduciendo = false;
+
+        return;
     }
-}
 
-
-// ======================================================
-// PAUSAR
-// ======================================================
-
-function pausar() {
-
-    // Detener completamente el vídeo
     video.pause();
-
     video.currentTime = 0;
 
-
-    // Detener completamente el audio
     detenerAudio();
-
+    detenerAudioEstatica();
+    mostrarApagada();
+    apagarLuzTV();
 
     reproduciendo = false;
-
-
-    // Volver a estática
-    mostrarEstatica();
-
-    reproducirAudioEstatica();
 }
-
-
-// ======================================================
-// PLAY / PAUSA
-// ======================================================
-
-async function toggleReproduccion() {
-
-    if (reproduciendo) {
-
-        pausar();
-
-    } else {
-
-        await reproducir();
-    }
-}
-
-
-// ======================================================
-// CAMBIAR CANAL
-// ======================================================
 
 function cambiarCanal(direccion) {
+    if (!encendida) {
+        return;
+    }
 
-    const estabaReproduciendo =
-        reproduciendo;
+    const estabaReproduciendo = reproduciendo;
 
-
-    // Crear identificador para esta operación.
-    //
-    // Si el usuario vuelve a cambiar de canal
-    // antes de terminar la carga, podremos detectar
-    // que esta operación ya quedó obsoleta.
-
-    const cambioActual =
-        ++cambioCanalID;
-
-
-    // --------------------------------------------------
-    // Detener canal actual
-    // --------------------------------------------------
+    const cambioActual = ++cambioCanalID;
 
     video.pause();
-
     video.currentTime = 0;
 
     detenerAudio();
 
     reproduciendo = false;
 
-
-    // --------------------------------------------------
-    // Mostrar estática
-    // --------------------------------------------------
-
     mostrarEstatica();
-
     reproducirAudioEstatica();
-
-
-    // --------------------------------------------------
-    // Calcular nuevo canal
-    // --------------------------------------------------
 
     canalActual += direccion;
 
-
     if (canalActual < 0) {
-
-        canalActual =
-            NUM_CANALES - 1;
+        canalActual = NUM_CANALES - 1;
     }
-
 
     if (canalActual >= NUM_CANALES) {
-
         canalActual = 0;
     }
-
 
     console.log(
         `Cargando canal ${canalActual + 1}`
     );
 
-
-    // --------------------------------------------------
-    // Cambiar vídeo
-    // --------------------------------------------------
-
     cambiarVideo(canalActual);
-
-
-    // --------------------------------------------------
-    // Preparar audio
-    // --------------------------------------------------
-
     cargarAudio(canalActual);
-
-
-    // --------------------------------------------------
-    // Esperar al vídeo
-    // --------------------------------------------------
 
     video.addEventListener(
         'canplay',
-
         async () => {
-
-            // Si ya ocurrió otro cambio de canal,
-            // esta carga dejó de ser válida.
-
             if (
                 cambioActual !== cambioCanalID
             ) {
                 return;
             }
 
-
-            // Si el televisor estaba reproduciendo
-            // antes del cambio, continuar.
-
             if (!estabaReproduciendo) {
                 return;
             }
 
-
             ocultarEstatica();
-
             detenerAudioEstatica();
-
             video.currentTime = 0;
 
-
             try {
-
                 await video.play();
-
-
-                // Comprobar nuevamente que esta
-                // operación sigue siendo válida.
 
                 if (
                     cambioActual !==
                     cambioCanalID
                 ) {
-
                     video.pause();
-
                     return;
                 }
 
-
                 reproduciendo = true;
-
-
                 reproducirAudio(canalActual);
 
             } catch (error) {
-
                 console.error(
                     'No se pudo reproducir el vídeo:',
                     error
                 );
-
                 mostrarEstatica();
-
                 reproducirAudioEstatica();
             }
         },
-
         {
             once: true
         }
     );
 }
 
-
-// ======================================================
-// ESTADO
-// ======================================================
-
 function obtenerEstado() {
-
     return {
         canal: canalActual + 1,
-        reproduciendo: reproduciendo
+        reproduciendo: reproduciendo,
+        encendida: encendida
     };
 }
-
 
 export {
     reproducir,
     pausar,
     toggleReproduccion,
     cambiarCanal,
+    alternarEncendido,
     obtenerEstado
 };

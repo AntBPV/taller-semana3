@@ -1,3 +1,5 @@
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 import {
     scene,
     camera,
@@ -5,9 +7,9 @@ import {
 } from './scene.js';
 
 import {
-    pantalla,
     inicializarTV,
     toggleReproduccion,
+    alternarEncendido,
     cambiarCanal,
     obtenerEstado
 } from './tv.js';
@@ -16,109 +18,117 @@ import {
     crearInterfaz
 } from './interface.js';
 
-// ======================================================
-// TELEVISOR
-// ======================================================
+import {
+    inicializarCamaras,
+    usarCamaraMain,
+    usarCamaraClose,
+    usarCamaraFar
+} from './camera.js';
 
-scene.add(pantalla);
+// Loader - Escena desde Blender
+const loader = new GLTFLoader();
 
-inicializarTV(camera);
+loader.load(
+    '/assets/models/scene.glb',
+(gltf) => {
+    const modelo = gltf.scene;
+    scene.add(modelo);
+    inicializarCamaras(modelo);
+    usarCamaraMain(camera);
 
-// ======================================================
-// INTERFAZ
-// ======================================================
+    // Loggear objetos del .glb
+    modelo.traverse((objeto) => {
+        console.log(
+            objeto.type,
+            objeto.name
+        );
+    });
 
+    const screen =
+        modelo.getObjectByName(
+            'TV-Screen'
+        );
+
+    const cameraMain =
+        modelo.getObjectByName('Camera_Main');
+
+    const cameraClose =
+        modelo.getObjectByName('Camera_Close');
+
+    const cameraFar =
+        modelo.getObjectByName('Camera_Far');
+
+    const tvLed =
+        modelo.getObjectByName(
+            'TV-LED'
+        );
+
+    console.log('Camera Main:', cameraMain);
+    console.log('Camera Close:', cameraClose);
+    console.log('Camera Far:', cameraFar);
+
+    inicializarTV(
+        camera,
+        screen,
+        tvLed
+    );
+},
+    undefined,
+    (error) => {
+        console.error(
+            'Error cargando scene.glb:',
+            error
+        );
+    }
+);
+
+// Interfaz HTML + Teclado
 const interfaz =
     crearInterfaz(
         toggleReproduccion,
+        alternarEncendido,
         cambiarCanal,
         obtenerEstado
     );
 
-// ======================================================
-// TECLADO
-// ======================================================
-
 window.addEventListener(
     'keydown',
     async (event) => {
-
         switch (
             event.key.toLowerCase()
         ) {
-
-            // ------------------------------------------
-            // PLAY / PAUSA
-            // ------------------------------------------
-
             case ' ':
-
                 event.preventDefault();
-
                 await toggleReproduccion();
-
                 interfaz.actualizar();
-
                 break;
 
-            // ------------------------------------------
-            // CANALES
-            // ------------------------------------------
-
+            // Canales
             case 'q':
-
                 cambiarCanal(-1);
-
                 interfaz.actualizar();
-
                 break;
 
             case 'e':
-
                 cambiarCanal(1);
-
                 interfaz.actualizar();
-
                 break;
 
-            // ------------------------------------------
-            // CÁMARA
-            // ------------------------------------------
-
-            case 'w':
-            case 'arrowup':
-
-                camera.position.z -= 0.2;
-
+            // Camara
+            case '1':
+                usarCamaraMain(camera);
                 break;
 
-            case 's':
-            case 'arrowdown':
-
-                camera.position.z += 0.2;
-
+            case '2':
+                usarCamaraClose(camera);
                 break;
 
-            case 'a':
-            case 'arrowleft':
-
-                camera.position.x -= 0.2;
-
-                break;
-
-            case 'd':
-            case 'arrowright':
-
-                camera.position.x += 0.2;
-
+            case '3':
+                usarCamaraFar(camera);
                 break;
         }
     }
 );
-
-// ======================================================
-// ANIMACIÓN
-// ======================================================
 
 function animate() {
 

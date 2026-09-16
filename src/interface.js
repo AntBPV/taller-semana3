@@ -1,15 +1,10 @@
-// ======================================================
-// INTERFAZ
-// ======================================================
-
 function crearInterfaz(
     toggleReproduccion,
+    alternarEncendido,
     cambiarCanal,
     obtenerEstado
 ) {
-
-    const interfaz =
-        document.createElement('div');
+    const interfaz = document.createElement('div');
 
     interfaz.style.position = 'fixed';
     interfaz.style.top = '20px';
@@ -22,11 +17,9 @@ function crearInterfaz(
 
     function actualizarInterfaz() {
 
-        const estado =
-            obtenerEstado();
+        const estado = obtenerEstado();
 
         interfaz.innerHTML = `
-
             <div style="margin-bottom:10px;">
                 Canal:
                 <strong>
@@ -37,11 +30,17 @@ function crearInterfaz(
             <div style="margin-bottom:10px;">
                 Estado:
                 ${
-                    estado.reproduciendo
-                        ? '▶ Reproduciendo'
-                        : '📺 Estática'
+                    !estado.encendida
+                        ? '⚫ Apagado'
+                        : estado.reproduciendo
+                            ? '▶ Reproduciendo'
+                            : '📺 Estática'
                 }
             </div>
+
+            <button id="powerButton">
+                ${estado.encendida ? '⏻ Apagar' : '⏻ Encender'}
+            </button>
 
             <button id="playButton">
                 ${
@@ -62,11 +61,17 @@ function crearInterfaz(
             <div style="margin-top:10px;">
                 Q / E = cambiar canal
             </div>
-
-            <div>
-                WASD = mover cámara
-            </div>
         `;
+
+        document
+            .getElementById('powerButton')
+            .addEventListener(
+                'click',
+                () => {
+                    alternarEncendido();
+                    actualizarInterfaz();
+                }
+            );
 
         document
             .getElementById('playButton')
@@ -85,9 +90,7 @@ function crearInterfaz(
             .addEventListener(
                 'click',
                 () => {
-
                     cambiarCanal(-1);
-
                     actualizarInterfaz();
                 }
             );
@@ -97,9 +100,7 @@ function crearInterfaz(
             .addEventListener(
                 'click',
                 () => {
-
                     cambiarCanal(1);
-
                     actualizarInterfaz();
                 }
             );

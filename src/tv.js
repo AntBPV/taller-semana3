@@ -1,38 +1,55 @@
-import { inicializarAudio } from './tv/tvAudio.js';
-
 import {
-    pantalla,
+    inicializarPantalla,
     mostrarEstatica
 } from './tv/tvMedia.js';
 
 import {
+    inicializarAudio
+} from './tv/tvAudio.js';
+
+import {
+    inicializarLuces
+} from './tv/tvLights.js';
+
+import {
     toggleReproduccion,
     cambiarCanal,
+    alternarEncendido,
     obtenerEstado
 } from './tv/tvPlayback.js';
 
+import {
+    scene
+} from './scene.js';
 
-// ======================================================
-// INICIALIZACIÓN
-// ======================================================
+function inicializarTV(
+    camera,
+    objetoPantalla,
+    objetoLed
+) {
 
-function inicializarTV(camera) {
+    inicializarPantalla(
+        objetoPantalla
+    );
 
-    inicializarAudio(camera);
+    inicializarAudio(
+        camera,
+        objetoPantalla
+    );
 
-    // El televisor comienza en estática.
+    inicializarLuces(
+        scene,
+        objetoPantalla,
+        objetoLed
+    );
+
     mostrarEstatica();
 }
 
-
-// ======================================================
-// EXPORTACIONES
-// ======================================================
-
 export {
-    pantalla,
     inicializarTV,
     toggleReproduccion,
+    alternarEncendido,
     cambiarCanal,
     obtenerEstado
 };

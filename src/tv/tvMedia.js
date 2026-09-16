@@ -5,11 +5,9 @@ import {
     staticVideoSource
 } from './tvConfig.js';
 
+let pantalla = null;
 
-// ======================================================
-// VÍDEO DEL CANAL
-// ======================================================
-
+// Videos Principales
 const video = document.createElement('video');
 
 video.loop = true;
@@ -18,28 +16,18 @@ video.playsInline = true;
 video.preload = 'auto';
 
 video.src = videoSources[0];
-video.load();
 
-
-// ======================================================
-// VÍDEO DE ESTÁTICA
-// ======================================================
-
+// Estatica
 const staticVideo = document.createElement('video');
 
-staticVideo.src = staticVideoSource;
 staticVideo.loop = true;
 staticVideo.muted = true;
 staticVideo.playsInline = true;
 staticVideo.preload = 'auto';
 
-staticVideo.load();
+staticVideo.src = staticVideoSource;
 
-
-// ======================================================
-// TEXTURAS
-// ======================================================
-
+// Texturas
 const videoTexture =
     new THREE.VideoTexture(video);
 
@@ -52,68 +40,78 @@ const staticTexture =
 staticTexture.colorSpace =
     THREE.SRGBColorSpace;
 
+function inicializarPantalla(objetoPantalla) {
+    pantalla = objetoPantalla;
 
-// ======================================================
-// PANTALLA
-// ======================================================
-
-const geometry =
-    new THREE.PlaneGeometry(4, 2.25);
-
-const material =
-    new THREE.MeshBasicMaterial({
-        map: staticTexture,
-        side: THREE.DoubleSide
-    });
-
-const pantalla =
-    new THREE.Mesh(
-        geometry,
-        material
-    );
-
-
-// ======================================================
-// ESTÁTICA
-// ======================================================
+    pantalla.material = new THREE.MeshBasicMaterial({
+            map: staticTexture,
+            side: THREE.DoubleSide
+        });
+}
 
 function mostrarEstatica() {
 
-    material.map = staticTexture;
-    material.needsUpdate = true;
+    if (!pantalla) return;
+
+    pantalla.material.map = staticTexture;
+    pantalla.material.color.set(
+        0xffffff
+    );
+    pantalla.material.needsUpdate = true;
 
     staticVideo.currentTime = 0;
 
-    staticVideo
-        .play()
-        .catch(() => {});
+    staticVideo.play().catch(() => {});
 }
 
-
 function ocultarEstatica() {
+
+    if (!pantalla) return;
+
+    pantalla.material.map = videoTexture;
+
+    pantalla.material.color.set(
+        0xffffff
+    );
+
+    pantalla.material.needsUpdate = true;
+}
+
+function mostrarApagada() {
+
+    if (!pantalla) return;
+
+    pantalla.material.map = null;
+
+    pantalla.material.color.set(
+        0x000000
+    );
+
+    pantalla.material.needsUpdate = true;
 
     staticVideo.pause();
     staticVideo.currentTime = 0;
 
-    material.map = videoTexture;
-    material.needsUpdate = true;
+    video.pause();
+    video.currentTime = 0;
 }
 
-
-// ======================================================
-// CAMBIAR VÍDEO
-// ======================================================
-
+// Cambiar video
 function cambiarVideo(canal) {
+    const src = videoSources[canal];
 
-    video.src = videoSources[canal];
+    console.log('Cambiando vídeo a:', src);
+
+    video.pause();
+    video.src = src;
     video.load();
+
+    console.log('Video src:', video.src);
 }
 
-
-// ======================================================
-// GETTERS
-// ======================================================
+function obtenerPantalla() {
+    return pantalla;
+}
 
 function obtenerVideo() {
     return video;
@@ -123,15 +121,12 @@ function obtenerStaticVideo() {
     return staticVideo;
 }
 
-function obtenerPantalla() {
-    return pantalla;
-}
-
-
 export {
-    pantalla,
+    inicializarPantalla,
+    obtenerPantalla,
     mostrarEstatica,
     ocultarEstatica,
+    mostrarApagada,
     cambiarVideo,
     obtenerVideo,
     obtenerStaticVideo

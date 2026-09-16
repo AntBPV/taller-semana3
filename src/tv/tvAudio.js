@@ -2,190 +2,105 @@ import * as THREE from 'three';
 
 import {
     audioSources,
-    staticAudioSource,
-    NUM_CANALES
+    staticAudioSource
 } from './tvConfig.js';
 
-import { pantalla } from './tvMedia.js';
-
-
-// ======================================================
-// ESTADO
-// ======================================================
-
 let listener = null;
-
 let sound = null;
-
 let staticSound = null;
 
-const audioLoader =
-    new THREE.AudioLoader();
+const audioLoader = new THREE.AudioLoader();
 
 const audioBuffers = [];
 
-
-// ======================================================
-// CONFIGURAR AUDIO ESPACIAL
-// ======================================================
-
 function configurarAudioEspacial(audio) {
-
     audio.setRefDistance(2);
-
     audio.setMaxDistance(15);
-
     audio.setRolloffFactor(1);
-
-    audio.setLoop(true);
-
     audio.setVolume(0.8);
 }
 
+function inicializarAudio(
+    camera,
+    objetoPantalla
+) {
 
-// ======================================================
-// INICIALIZAR AUDIO
-// ======================================================
-
-function inicializarAudio(camera) {
-
-    listener =
-        new THREE.AudioListener();
+    listener = new THREE.AudioListener();
 
     camera.add(listener);
 
+    sound = new THREE.PositionalAudio(
+        listener
+    );
 
-    // --------------------------------------------------
-    // Audio de los canales
-    // --------------------------------------------------
-
-    sound =
-        new THREE.PositionalAudio(
-            listener
-        );
+    staticSound = new THREE.PositionalAudio(
+        listener
+    );
 
     configurarAudioEspacial(sound);
-
-    pantalla.add(sound);
-
-
-    // --------------------------------------------------
-    // Audio de estática
-    // --------------------------------------------------
-
-    staticSound =
-        new THREE.PositionalAudio(
-            listener
-        );
-
     configurarAudioEspacial(staticSound);
 
-    pantalla.add(staticSound);
-
-
-    // --------------------------------------------------
-    // Cargar estática
-    // --------------------------------------------------
+    objetoPantalla.add(sound);
+    objetoPantalla.add(staticSound);
 
     audioLoader.load(
         staticAudioSource,
-
         (buffer) => {
-
             staticSound.setBuffer(buffer);
-
-            // El televisor comienza
-            // mostrando estática.
-            staticSound.play();
-        },
-
-        undefined,
-
-        (error) => {
-
-            console.error(
-                'No se pudo cargar el audio de estática:',
-                error
-            );
+            staticSound.setLoop(true);
         }
     );
 
-
-    // --------------------------------------------------
-    // Cargar audios de canales
-    // --------------------------------------------------
-
-    for (
-        let i = 0;
-        i < NUM_CANALES;
-        i++
-    ) {
-
-        cargarAudio(i);
-    }
+    audioSources.forEach(
+        (src, index) => {
+            audioLoader.load(
+                src,
+                (buffer) => {
+                    audioBuffers[index] =
+                        buffer;
+                }
+            );
+        }
+    );
 }
-
-
-// ======================================================
-// CARGAR AUDIO DE UN CANAL
-// ======================================================
 
 function cargarAudio(canal) {
+    return new Promise(
+        (resolve, reject) => {
+            if (audioBuffers[canal]) {
+                resolve(
+                    audioBuffers[canal]
+                );
+                return;
+            }
 
-    if (audioBuffers[canal]) {
-        return;
-    }
-
-    audioLoader.load(
-        audioSources[canal],
-
-        (buffer) => {
-
-            audioBuffers[canal] = buffer;
-        },
-
-        undefined,
-
-        (error) => {
-
-            console.error(
-                `No se pudo cargar el audio del canal ${canal + 1}:`,
-                error
+            audioLoader.load(
+                audioSources[canal],
+                (buffer) => {
+                    audioBuffers[canal] =
+                        buffer;
+                    resolve(buffer);
+                },
+                undefined,
+                reject
             );
         }
     );
 }
 
-
-// ======================================================
-// REPRODUCIR AUDIO DEL CANAL
-// ======================================================
-
-function reproducirAudio(canal) {
-
-    if (!sound) {
-        return;
-    }
-
+async function reproducirAudio(canal) {
     const buffer =
-        audioBuffers[canal];
-
-    if (!buffer) {
-        return;
+        await cargarAudio(canal);
+    if (sound.isPlaying) {
+        sound.stop();
     }
 
     sound.setBuffer(buffer);
-
+    sound.setLoop(true);
     sound.play();
 }
 
-
-// ======================================================
-// DETENER AUDIO DEL CANAL
-// ======================================================
-
 function detenerAudio() {
-
     if (
         sound &&
         sound.isPlaying
@@ -194,15 +109,8 @@ function detenerAudio() {
     }
 }
 
-
-// ======================================================
-// REPRODUCIR ESTÁTICA
-// ======================================================
-
 function reproducirAudioEstatica() {
-
     if (
-        staticSound &&
         staticSound.buffer &&
         !staticSound.isPlaying
     ) {
@@ -210,13 +118,7 @@ function reproducirAudioEstatica() {
     }
 }
 
-
-// ======================================================
-// DETENER AUDIO DE ESTÁTICA
-// ======================================================
-
 function detenerAudioEstatica() {
-
     if (
         staticSound &&
         staticSound.isPlaying
@@ -224,7 +126,6 @@ function detenerAudioEstatica() {
         staticSound.stop();
     }
 }
-
 
 export {
     inicializarAudio,
