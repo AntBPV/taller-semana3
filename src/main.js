@@ -1,4 +1,5 @@
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import './style.css';
 
 import {
     scene,
@@ -8,9 +9,6 @@ import {
 
 import {
     inicializarTV,
-    toggleReproduccion,
-    alternarEncendido,
-    cambiarCanal,
     obtenerEstado
 } from './tv.js';
 
@@ -25,6 +23,11 @@ import {
     usarCamaraFar
 } from './camera.js';
 
+import {
+    inicializarRemoto,
+    actualizarRemoto
+} from './remote.js';
+
 // Loader - Escena desde Blender
 const loader = new GLTFLoader();
 
@@ -35,14 +38,15 @@ loader.load(
     scene.add(modelo);
     inicializarCamaras(modelo);
     usarCamaraMain(camera);
+    inicializarRemoto();
 
     // Loggear objetos del .glb
-    modelo.traverse((objeto) => {
-        console.log(
-            objeto.type,
-            objeto.name
-        );
-    });
+    // modelo.traverse((objeto) => {
+    //     console.log(
+    //         objeto.type,
+    //         objeto.name
+    //     );
+    // });
 
     const screen =
         modelo.getObjectByName(
@@ -63,9 +67,9 @@ loader.load(
             'TV-LED'
         );
 
-    console.log('Camera Main:', cameraMain);
-    console.log('Camera Close:', cameraClose);
-    console.log('Camera Far:', cameraFar);
+    // console.log('Camera Main:', cameraMain);
+    // console.log('Camera Close:', cameraClose);
+    // console.log('Camera Far:', cameraFar);
 
     inicializarTV(
         camera,
@@ -85,11 +89,14 @@ loader.load(
 // Interfaz HTML + Teclado
 const interfaz =
     crearInterfaz(
-        toggleReproduccion,
-        alternarEncendido,
-        cambiarCanal,
         obtenerEstado
     );
+setInterval(
+    () => {
+        interfaz.actualizar();
+    },
+    100
+);
 
 window.addEventListener(
     'keydown',
@@ -100,17 +107,6 @@ window.addEventListener(
             case ' ':
                 event.preventDefault();
                 await toggleReproduccion();
-                interfaz.actualizar();
-                break;
-
-            // Canales
-            case 'q':
-                cambiarCanal(-1);
-                interfaz.actualizar();
-                break;
-
-            case 'e':
-                cambiarCanal(1);
                 interfaz.actualizar();
                 break;
 
@@ -131,9 +127,8 @@ window.addEventListener(
 );
 
 function animate() {
-
     requestAnimationFrame(animate);
-
+    actualizarRemoto();
     renderer.render(
         scene,
         camera

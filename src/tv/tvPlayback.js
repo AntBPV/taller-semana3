@@ -146,9 +146,9 @@ function cambiarCanal(direccion) {
         canalActual = 0;
     }
 
-    console.log(
-        `Cargando canal ${canalActual + 1}`
-    );
+    // console.log(
+    //     `Cargando canal ${canalActual + 1}`
+    // );
 
     cambiarVideo(canalActual);
     cargarAudio(canalActual);

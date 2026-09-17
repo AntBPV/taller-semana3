@@ -100,13 +100,13 @@ function mostrarApagada() {
 function cambiarVideo(canal) {
     const src = videoSources[canal];
 
-    console.log('Cambiando vídeo a:', src);
+    // console.log('Cambiando vídeo a:', src);
 
     video.pause();
     video.src = src;
     video.load();
 
-    console.log('Video src:', video.src);
+    // console.log('Video src:', video.src);
 }
 
 function obtenerPantalla() {

@@ -23,12 +23,12 @@ function inicializarCamaras(modelo) {
 
     cameraActiva = cameraMain;
 
-    console.log(
-        'Cámaras inicializadas:',
-        cameraMain,
-        cameraClose,
-        cameraFar
-    );
+    // console.log(
+    //     'Cámaras inicializadas:',
+    //     cameraMain,
+    //     cameraClose,
+    //     cameraFar
+    // );
 }
 
 function cambiarCamara(

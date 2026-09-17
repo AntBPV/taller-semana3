@@ -1,7 +1,4 @@
 function crearInterfaz(
-    toggleReproduccion,
-    alternarEncendido,
-    cambiarCanal,
     obtenerEstado
 ) {
     const interfaz = document.createElement('div');
@@ -38,72 +35,22 @@ function crearInterfaz(
                 }
             </div>
 
-            <button id="powerButton">
-                ${estado.encendida ? '⏻ Apagar' : '⏻ Encender'}
-            </button>
+            <div style="margin-top:15px;">
+                <strong>Controles de cámara</strong>
+            </div>
 
-            <button id="playButton">
-                ${
-                    estado.reproduciendo
-                        ? '⏸ Pausar'
-                        : '▶ Reproducir'
-                }
-            </button>
+            <div style="margin-top:5px;">
+                1 = Cámara principal
+            </div>
 
-            <button id="previousButton">
-                ◀ CH-
-            </button>
+            <div>
+                2 = Cámara cercana
+            </div>
 
-            <button id="nextButton">
-                CH+ ▶
-            </button>
-
-            <div style="margin-top:10px;">
-                Q / E = cambiar canal
+            <div>
+                3 = Cámara lejana
             </div>
         `;
-
-        document
-            .getElementById('powerButton')
-            .addEventListener(
-                'click',
-                () => {
-                    alternarEncendido();
-                    actualizarInterfaz();
-                }
-            );
-
-        document
-            .getElementById('playButton')
-            .addEventListener(
-                'click',
-                async () => {
-
-                    await toggleReproduccion();
-
-                    actualizarInterfaz();
-                }
-            );
-
-        document
-            .getElementById('previousButton')
-            .addEventListener(
-                'click',
-                () => {
-                    cambiarCanal(-1);
-                    actualizarInterfaz();
-                }
-            );
-
-        document
-            .getElementById('nextButton')
-            .addEventListener(
-                'click',
-                () => {
-                    cambiarCanal(1);
-                    actualizarInterfaz();
-                }
-            );
     }
 
     actualizarInterfaz();
